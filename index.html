@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Dynamiskt Formulär - Fortsätta Terminen</title>
+<style>
+  /* Reset and base */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; padding: 0;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 24px 32px;
+    width: 100%;
+    max-width: 350px;
+    max-height: 600px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  h1 {
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+  fieldset {
+    border: none;
+    margin: 0 0 24px 0;
+    padding: 0;
+  }
+  legend {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  label {
+    display: block;
+    background: rgba(255,255,255,0.15);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-size: 1rem;
+  }
+  label:hover {
+    background: rgba(255,255,255,0.25);
+  }
+  input[type="radio"] {
+    margin-right: 12px;
+    accent-color: #764ba2;
+    cursor: pointer;
+  }
+  button {
+    background-color: #764ba2;
+    border: none;
+    color: white;
+    font-weight: 700;
+    font-size: 1.1rem;
+    padding: 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(118,75,162,0.7);
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #9164c3;
+  }
+  .response-message {
+    margin-top: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    background-color: rgba(0,0,0,0.3);
+  }
+
+  @media (max-width: 400px) {
+    .container {
+      padding: 20px 24px;
+      max-width: 100%;
+      margin: 0 10px;
+    }
+    h1 {
+      font-size: 1.4rem;
+    }
+    label {
+      font-size: 0.95rem;
+    }
+    button {
+      font-size: 1rem;
+    }
+  }
+</style>
+</head>
+<body>
+  <main class="container" role="main">
+    <h1>Fyll i formuläret</h1>
+    <form id="semesterForm" aria-label="Formulär för att fortsätta hela terminen">
+      <fieldset>
+        <legend>Välj ett alternativ:</legend>
+        <label>
+          <input type="radio" name="continueTerm" value="fortsatta" aria-describedby="desc1" required />
+          Jag vill fortsätta hela terminen
+        </label>
+        <label>
+          <input type="radio" name="continueTerm" value="inte" aria-describedby="desc2" />
+          Jag vill inte
+        </label>
+      </fieldset>
+      <button type="submit">Skicka</button>
+      <div id="response" class="response-message" role="alert" aria-live="polite" hidden></div>
+    </form>
+  </main>
+  <script>
+    const form = document.getElementById('semesterForm');
+    const response = document.getElementById('response');
+
+    // Counters for yes and no responses
+    let countYes = 0;
+    let countNo = 0;
+
+    // Load counts from localStorage if available
+    if (localStorage.getItem('countYes')) {
+      countYes = parseInt(localStorage.getItem('countYes'), 10);
+    }
+    if (localStorage.getItem('countNo')) {
+      countNo = parseInt(localStorage.getItem('countNo'), 10);
+    }
+
+    // Create element to display counts
+    const countDisplay = document.createElement('div');
+    countDisplay.style.marginTop = '12px';
+    countDisplay.style.fontWeight = '600';
+    countDisplay.style.textAlign = 'center';
+    countDisplay.style.backgroundColor = 'rgba(0,0,0,0.3)';
+    countDisplay.style.borderRadius = '10px';
+    countDisplay.style.padding = '8px';
+    countDisplay.style.fontSize = '1rem';
+    response.insertAdjacentElement('afterend', countDisplay);
+
+    // Display initial counts
+    countDisplay.textContent = `Antal "Ja": ${countYes} | Antal "Nej": ${countNo}`;
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      // Check if user has already voted
+      if (localStorage.getItem('hasVoted')) {
+        response.textContent = 'Du har redan röstat. Tack för ditt deltagande.';
+        response.hidden = false;
+        return;
+      }
+
+      const selectedOption = form.continueTerm.value;
+      let message = '';
+      if(selectedOption === 'fortsatta') {
+        message = 'Tack för att du vill fortsätta hela terminen! Vi har tagit emot ditt svar.';
+        countYes++;
+        localStorage.setItem('countYes', countYes);
+      } else if(selectedOption === 'inte') {
+        message = 'Vi har noterat att du inte vill fortsätta hela terminen. Tack för din återkoppling.';
+        countNo++;
+        localStorage.setItem('countNo', countNo);
+      }
+
+      // Mark user as voted
+      localStorage.setItem('hasVoted', 'true');
+
+      response.textContent = message;
+      response.hidden = false;
+      countDisplay.textContent = `Antal "Ja": ${countYes} | Antal "Nej": ${countNo}`;
+    });
+  </script>
+</body>
+</html>
